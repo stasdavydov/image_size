@@ -115,30 +115,7 @@ def get_image_metadata(file_path):
             # JPEG
             imgtype = JPEG
             input.seek(0)
-            input.read(2)
-            b = input.read(1)
-            try:
-                while (b and ord(b) != 0xDA):
-                    while (ord(b) != 0xFF):
-                        b = input.read(1)
-                    while (ord(b) == 0xFF):
-                        b = input.read(1)
-                    if (ord(b) >= 0xC0 and ord(b) <= 0xC3):
-                        input.read(3)
-                        h, w = struct.unpack(">HH", input.read(4))
-                        break
-                    else:
-                        input.read(
-                            int(struct.unpack(">H", input.read(2))[0]) - 2)
-                    b = input.read(1)
-                width = int(w)
-                height = int(h)
-            except struct.error:
-                raise UnknownImageFormat("StructError" + msg)
-            except ValueError:
-                raise UnknownImageFormat("ValueError" + msg)
-            except Exception as e:
-                raise UnknownImageFormat(e.__class__.__name__ + msg)
+            height, width = get_jpeg_size(input, msg)
         elif (size >= 26) and data.startswith(b'BM'):
             # BMP
             imgtype = 'BMP'
@@ -242,6 +219,33 @@ def get_image_metadata(file_path):
                  file_size=size,
                  width=width,
                  height=height)
+
+
+def get_jpeg_size(input):
+    input.read(2)
+    b = input.read(1)
+    try:
+        w = 0
+        h = 0
+        while b and ord(b) != 0xDA:
+            while ord(b) != 0xFF:
+                b = input.read(1)
+            while ord(b) == 0xFF:
+                b = input.read(1)
+            if 0xC0 <= ord(b) <= 0xC3:
+                input.read(3)
+                h, w = struct.unpack(">HH", input.read(4))
+                break
+            else:
+                input.read(int(struct.unpack(">H", input.read(2))[0]) - 2)
+            b = input.read(1)
+        return int(w), int(h)
+    except struct.error:
+        raise UnknownImageFormat("StructError raised while trying to decode as JPEG.")
+    except ValueError:
+        raise UnknownImageFormat("ValueError raised while trying to decode as JPEG.")
+    except Exception as e:
+        raise UnknownImageFormat(e.__class__.__name__ + " raised while trying to decode as JPEG.")
 
 
 import unittest
