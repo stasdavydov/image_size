@@ -90,7 +90,6 @@ def get_image_metadata(file_path):
         height = -1
         width = -1
         data = input.read(26)
-        msg = " raised while trying to decode as JPEG."
 
         if (size >= 10) and data[:6] in (b'GIF87a', b'GIF89a'):
             # GIFs
@@ -115,7 +114,7 @@ def get_image_metadata(file_path):
             # JPEG
             imgtype = JPEG
             input.seek(0)
-            height, width = get_jpeg_size(input, msg)
+            height, width = get_jpeg_size(input)
         elif (size >= 26) and data.startswith(b'BM'):
             # BMP
             imgtype = 'BMP'
